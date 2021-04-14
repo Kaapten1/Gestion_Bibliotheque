@@ -1,0 +1,953 @@
+SQL> -- pas d'affichage des substitutions de variable
+SQL> SET VERIFY OFF
+SQL> -- sortir en cas d'erreur
+SQL> WHENEVER OSERROR EXIT
+SQL> WHENEVER SQLERROR EXIT rollback
+SQL> set linesize 60
+SQL> set pagesize 200
+SQL> 
+SQL> @install_biblio.sql
+SQL> --/*==============================================================*/
+SQL> --/* Nom de la base :  BIBLIO					*/
+SQL> --/* Nom du fichier : install_biblio.sql				 */
+SQL> --/* Nom de SGBD :  ORACLE 			     */
+SQL> --/*==============================================================*/
+SQL> 
+SQL> create sequence seq_auteur start with 1 increment by 1;
+
+Séquence créée.
+
+SQL> create sequence seq_exemplaire start with 1 increment by 1;
+
+Séquence créée.
+
+SQL> create sequence seq_editeur start with 1 increment by 1;
+
+Séquence créée.
+
+SQL> create sequence seq_archive start with 1 increment by 1;
+
+Séquence créée.
+
+SQL> create sequence seq_utilisateur start with 1 increment by 1;
+
+Séquence créée.
+
+SQL> 
+SQL> CREATE TABLE Auteur_livre (
+  2  	     isbn VARCHAR2 ( 16 ) NOT NULL,
+  3  	     idAuteur Number ( 6 ) NOT NULL,
+  4    ordreAuteur Number (2),
+  5    CONSTRAINT CK_ordreAuteur CHECK (ordreAuteur > 0),
+  6  	     CONSTRAINT PK_Ecrire50 PRIMARY KEY (idAuteur, isbn)
+  7  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Theme (
+  2  	     codeTheme VARCHAR2 ( 2 ) NOT NULL,
+  3  	     libelle VARCHAR2 ( 40 ) NOT NULL,
+  4  	     theme_parent VARCHAR2 ( 2 ) ,
+  5  	     CONSTRAINT PK_Theme42 PRIMARY KEY (codeTheme)
+  6  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Adherent (
+  2  	     idUtilisateur NUMBER ( 6 ) NOT NULL,
+  3  	     telephone VARCHAR2 ( 16 ) NOT NULL,
+  4  	     CONSTRAINT PK_Adherent46 PRIMARY KEY (idUtilisateur)
+  5  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Editeur (
+  2  	     idEditeur NUMBER ( 5 ) NOT NULL,
+  3  	     nomEditeur VARCHAR2 ( 40 ) NOT NULL,
+  4  	     ville VARCHAR2 ( 40 ) NOT NULL,
+  5  	     CONSTRAINT PK_Editeur32 PRIMARY KEY (idEditeur)
+  6  	     );
+
+Table créée.
+
+SQL> CREATE TABLE AdherentGeneral (
+  2  	     nbMaxPrets NUMBER ( 1 ) NOT NULL,
+  3  	     dureeMaxPrets NUMBER ( 2 ) NOT NULL
+  4  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Exemplaire (
+  2  	     idExemplaire NUMBER ( 6 ) NOT NULL,
+  3  	     dateAchat DATE NOT NULL,
+  4  	     status VARCHAR2 ( 15 ) NOT NULL,
+  5  	     isbn VARCHAR2 ( 16 ) NOT NULL,
+  6  	     CONSTRAINT PK_Exemplaire53 PRIMARY KEY (idExemplaire),
+  7  	     CONSTRAINT CK_status CHECK (status in ('PRETE' , 'DISPONIBLE', 'SUPPRIME'))
+  8  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Auteur (
+  2  	     idAuteur NUMBER ( 6 ) NOT NULL,
+  3  	     nom VARCHAR2 ( 40 ) NOT NULL,
+  4  	     prenom VARCHAR2 ( 40 ) NOT NULL,
+  5  	     CONSTRAINT PK_Auteur52 PRIMARY KEY (idAuteur)
+  6  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Employe (
+  2  	     idUtilisateur NUMBER ( 6 ) NOT NULL,
+  3  	     codeMatricule VARCHAR2 ( 15 ) NOT NULL,
+  4  	     categorieEmploye VARCHAR2 ( 15 ) NOT NULL,
+  5  	     CONSTRAINT PK_Employe33 PRIMARY KEY (idUtilisateur),
+  6  	     CONSTRAINT TC_Employe147 UNIQUE (codeMatricule),
+  7  	     CONSTRAINT CK_categorie_employe CHECK (categorieEmploye in ('BIBLIOTHECAIRE' , 'RESPONSABLE' , 'GESTIONNAIRE'))
+  8  	     );
+
+Table créée.
+
+SQL> CREATE TABLE EmpruntArchive (
+  2  	     idEmpruntArchive NUMBER ( 6 ) NOT NULL,
+  3  	     dateEmprunt DATE NOT NULL,
+  4  	     dateRestitutionEff DATE NOT NULL,
+  5  	     idExemplaire NUMBER ( 6 ) NOT NULL,
+  6  	     idUtilisateur NUMBER ( 6 ) NOT NULL,
+  7  	     CONSTRAINT PK_EmpruntArchive51 PRIMARY KEY (idEmpruntArchive)
+  8  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Utilisateur (
+  2  	     idUtilisateur NUMBER ( 6 ) NOT NULL,
+  3  	     nom VARCHAR2 ( 40 ) NOT NULL,
+  4  	     prenom VARCHAR2 ( 40 ) NOT NULL,
+  5  	     pwd VARCHAR2 ( 15 ) NOT NULL,
+  6  	     pseudonyme varchar2 (20) not null,
+  7  	     datenaissance date not null,
+  8  	     sexe varchar(1) not null,
+  9  	     categorieutilisateur VARCHAR2 ( 15 ) NOT NULL,
+ 10  	     CONSTRAINT PK_Utilisateur44 PRIMARY KEY (idUtilisateur),
+ 11  	     CONSTRAINT CK_catgorie_utilisateur CHECK (categorieutilisateur in ('EMPLOYE' , 'ADHERENT')),
+ 12  	     CONSTRAINT CK_sexe CHECK (sexe in ('H' , 'F')),
+ 13  	     CONSTRAINT TC_pseudo UNIQUE (pseudonyme)
+ 14  	     );
+
+Table créée.
+
+SQL> CREATE TABLE Livre (
+  2  	     isbn VARCHAR2 ( 16 ) NOT NULL,
+  3  	     titre VARCHAR2 ( 40 ) NOT NULL,
+  4  	     idEditeur NUMBER ( 5 ) NOT NULL,
+  5  	     codeTheme VARCHAR2 ( 2 ) NOT NULL,
+  6  	     anneeParution NUMBER ( 4 ) NOT NULL,
+  7  	     nbPages NUMBER(5) NOT NULL,
+  8  	     CONSTRAINT PK_Livre40 PRIMARY KEY (isbn),
+  9  	     CONSTRAINT CK_annee_parution CHECK (anneeParution > 0),
+ 10  	     CONSTRAINT CK_Nb_Pages CHECK (nbPages >=0)
+ 11  	     );
+
+Table créée.
+
+SQL> CREATE TABLE EmpruntEncours (
+  2  	     idExemplaire NUMBER ( 6 ) NOT NULL,
+  3  	     idUtilisateur NUMBER ( 6 ) NOT NULL,
+  4  	     dateEmprunt DATE NOT NULL,
+  5  	     CONSTRAINT PK_EmpruntEncours54 PRIMARY KEY (idExemplaire)
+  6  	     );
+
+Table créée.
+
+SQL> ALTER TABLE Auteur_livre ADD ( CONSTRAINT FK_Ecrire43 FOREIGN KEY (isbn) REFERENCES Livre (isbn));
+
+Table modifiée.
+
+SQL> ALTER TABLE Auteur_livre ADD ( CONSTRAINT FK_Auteur_livre46 FOREIGN KEY (idAuteur) REFERENCES Auteur (idAuteur));
+
+Table modifiée.
+
+SQL> ALTER TABLE Theme ADD ( CONSTRAINT FK_Theme45 FOREIGN KEY (theme_parent) REFERENCES Theme (codeTheme));
+
+Table modifiée.
+
+SQL> ALTER TABLE Adherent ADD ( CONSTRAINT FK_Adherent30 FOREIGN KEY (idUtilisateur) REFERENCES Utilisateur (idUtilisateur));
+
+Table modifiée.
+
+SQL> ALTER TABLE Exemplaire ADD ( CONSTRAINT FK_Exemplaire24 FOREIGN KEY (isbn) REFERENCES Livre (isbn));
+
+Table modifiée.
+
+SQL> ALTER TABLE Employe ADD ( CONSTRAINT FK_Employe33 FOREIGN KEY (idUtilisateur) REFERENCES Utilisateur (idUtilisateur));
+
+Table modifiée.
+
+SQL> ALTER TABLE EmpruntArchive ADD ( CONSTRAINT FK_EmpruntArchive44 FOREIGN KEY (idUtilisateur) REFERENCES Utilisateur (idUtilisateur));
+
+Table modifiée.
+
+SQL> ALTER TABLE EmpruntArchive ADD ( CONSTRAINT FK_EmpruntArchive48 FOREIGN KEY (idExemplaire) REFERENCES Exemplaire (idExemplaire));
+
+Table modifiée.
+
+SQL> ALTER TABLE Livre ADD ( CONSTRAINT FK_Livre19 FOREIGN KEY (idEditeur) REFERENCES Editeur (idEditeur));
+
+Table modifiée.
+
+SQL> ALTER TABLE Livre ADD ( CONSTRAINT FK_Livre25 FOREIGN KEY (codeTheme) REFERENCES Theme (codeTheme));
+
+Table modifiée.
+
+SQL> ALTER TABLE EmpruntEncours ADD ( CONSTRAINT FK_EmpruntEncours47 FOREIGN KEY (idExemplaire) REFERENCES Exemplaire (idExemplaire));
+
+Table modifiée.
+
+SQL> ALTER TABLE EmpruntEncours ADD ( CONSTRAINT FK_EmpruntEncours29 FOREIGN KEY (idUtilisateur) REFERENCES Utilisateur (idUtilisateur));
+
+Table modifiée.
+
+SQL> 
+SQL> prompt
+
+SQL> prompt
+
+SQL> prompt
+
+SQL> Prompt ******************************
+******************************
+SQL> prompt Recapitulatif des Objets créés
+Recapitulatif des Objets créés
+SQL> Prompt ******************************
+******************************
+SQL> select * from user_catalog;
+
+TABLE_NAME                                                  
+------------------------------------------------------------
+TABLE_TYPE                                                  
+-----------                                                 
+SEQ_AUTEUR                                                  
+SEQUENCE                                                    
+                                                            
+SEQ_EXEMPLAIRE                                              
+SEQUENCE                                                    
+                                                            
+SEQ_EDITEUR                                                 
+SEQUENCE                                                    
+                                                            
+SEQ_ARCHIVE                                                 
+SEQUENCE                                                    
+                                                            
+SEQ_UTILISATEUR                                             
+SEQUENCE                                                    
+                                                            
+AUTEUR_LIVRE                                                
+TABLE                                                       
+                                                            
+THEME                                                       
+TABLE                                                       
+                                                            
+ADHERENT                                                    
+TABLE                                                       
+                                                            
+EDITEUR                                                     
+TABLE                                                       
+                                                            
+ADHERENTGENERAL                                             
+TABLE                                                       
+                                                            
+EXEMPLAIRE                                                  
+TABLE                                                       
+                                                            
+AUTEUR                                                      
+TABLE                                                       
+                                                            
+EMPLOYE                                                     
+TABLE                                                       
+                                                            
+EMPRUNTARCHIVE                                              
+TABLE                                                       
+                                                            
+UTILISATEUR                                                 
+TABLE                                                       
+                                                            
+LIVRE                                                       
+TABLE                                                       
+                                                            
+EMPRUNTENCOURS                                              
+TABLE                                                       
+                                                            
+
+17 lignes sélectionnées.
+
+SQL> prompt
+
+SQL> prompt
+
+SQL> prompt
+
+SQL> prompt ************************************
+************************************
+SQL> prompt Recapitulatif des contraintes pos?es
+Recapitulatif des contraintes pos?es
+SQL> prompt ************************************
+************************************
+SQL> 
+SQL> column constraint_name format A20
+SQL> column type format A3
+SQL> column table_name format A15
+SQL> column SEARCH_CONDITION format A30
+SQL> 
+SQL> break on type skip
+SQL> compute count of constraint_name on type report
+SQL> select  constraint_name, Constraint_type as type,
+  2  	     table_name , SEARCH_CONDITION, DELETE_RULE, STATUS
+  3  from user_constraints
+  4  order by type, table_name;
+
+CONSTRAINT_NAME      TYP TABLE_NAME                         
+-------------------- --- ---------------                    
+SEARCH_CONDITION               DELETE_RU STATUS             
+------------------------------ --------- --------           
+SYS_C0011551         C   ADHERENT                           
+"TELEPHONE" IS NOT NULL                  ENABLED            
+                                                            
+SYS_C0011550             ADHERENT                           
+"IDUTILISATEUR" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011557             ADHERENTGENERAL                    
+"NBMAXPRETS" IS NOT NULL                 ENABLED            
+                                                            
+SYS_C0011558             ADHERENTGENERAL                    
+"DUREEMAXPRETS" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011566             AUTEUR                             
+"NOM" IS NOT NULL                        ENABLED            
+                                                            
+SYS_C0011565             AUTEUR                             
+"IDAUTEUR" IS NOT NULL                   ENABLED            
+                                                            
+SYS_C0011567             AUTEUR                             
+"PRENOM" IS NOT NULL                     ENABLED            
+                                                            
+SYS_C0011543             AUTEUR_LIVRE                       
+"ISBN" IS NOT NULL                       ENABLED            
+                                                            
+CK_ORDREAUTEUR           AUTEUR_LIVRE                       
+ordreAuteur > 0                          ENABLED            
+                                                            
+SYS_C0011544             AUTEUR_LIVRE                       
+"IDAUTEUR" IS NOT NULL                   ENABLED            
+                                                            
+SYS_C0011555             EDITEUR                            
+"VILLE" IS NOT NULL                      ENABLED            
+                                                            
+SYS_C0011554             EDITEUR                            
+"NOMEDITEUR" IS NOT NULL                 ENABLED            
+                                                            
+SYS_C0011553             EDITEUR                            
+"IDEDITEUR" IS NOT NULL                  ENABLED            
+                                                            
+CK_CATEGORIE_EMPLOYE     EMPLOYE                            
+categorieEmploye in ('BIBLIOTH           ENABLED            
+ECAIRE' , 'RESPONSABLE' , 'GES                              
+TIONNAIRE')                                                 
+                                                            
+SYS_C0011569             EMPLOYE                            
+"IDUTILISATEUR" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011571             EMPLOYE                            
+"CATEGORIEEMPLOYE" IS NOT NULL           ENABLED            
+                                                            
+SYS_C0011570             EMPLOYE                            
+"CODEMATRICULE" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011578             EMPRUNTARCHIVE                     
+"IDEXEMPLAIRE" IS NOT NULL               ENABLED            
+                                                            
+SYS_C0011579             EMPRUNTARCHIVE                     
+"IDUTILISATEUR" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011577             EMPRUNTARCHIVE                     
+"DATERESTITUTIONEFF" IS NOT NU           ENABLED            
+LL                                                          
+                                                            
+SYS_C0011576             EMPRUNTARCHIVE                     
+"DATEEMPRUNT" IS NOT NULL                ENABLED            
+                                                            
+SYS_C0011575             EMPRUNTARCHIVE                     
+"IDEMPRUNTARCHIVE" IS NOT NULL           ENABLED            
+                                                            
+SYS_C0011603             EMPRUNTENCOURS                     
+"IDUTILISATEUR" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011602             EMPRUNTENCOURS                     
+"IDEXEMPLAIRE" IS NOT NULL               ENABLED            
+                                                            
+SYS_C0011604             EMPRUNTENCOURS                     
+"DATEEMPRUNT" IS NOT NULL                ENABLED            
+                                                            
+SYS_C0011559             EXEMPLAIRE                         
+"IDEXEMPLAIRE" IS NOT NULL               ENABLED            
+                                                            
+CK_STATUS                EXEMPLAIRE                         
+status in ('PRETE' , 'DISPONIB           ENABLED            
+LE', 'SUPPRIME')                                            
+                                                            
+SYS_C0011562             EXEMPLAIRE                         
+"ISBN" IS NOT NULL                       ENABLED            
+                                                            
+SYS_C0011561             EXEMPLAIRE                         
+"STATUS" IS NOT NULL                     ENABLED            
+                                                            
+SYS_C0011560             EXEMPLAIRE                         
+"DATEACHAT" IS NOT NULL                  ENABLED            
+                                                            
+SYS_C0011593             LIVRE                              
+"ISBN" IS NOT NULL                       ENABLED            
+                                                            
+SYS_C0011594             LIVRE                              
+"TITRE" IS NOT NULL                      ENABLED            
+                                                            
+SYS_C0011595             LIVRE                              
+"IDEDITEUR" IS NOT NULL                  ENABLED            
+                                                            
+SYS_C0011596             LIVRE                              
+"CODETHEME" IS NOT NULL                  ENABLED            
+                                                            
+SYS_C0011598             LIVRE                              
+"NBPAGES" IS NOT NULL                    ENABLED            
+                                                            
+CK_ANNEE_PARUTION        LIVRE                              
+anneeParution > 0                        ENABLED            
+                                                            
+CK_NB_PAGES              LIVRE                              
+nbPages >=0                              ENABLED            
+                                                            
+SYS_C0011597             LIVRE                              
+"ANNEEPARUTION" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011547             THEME                              
+"CODETHEME" IS NOT NULL                  ENABLED            
+                                                            
+SYS_C0011548             THEME                              
+"LIBELLE" IS NOT NULL                    ENABLED            
+                                                            
+SYS_C0011587             UTILISATEUR                        
+"SEXE" IS NOT NULL                       ENABLED            
+                                                            
+SYS_C0011588             UTILISATEUR                        
+"CATEGORIEUTILISATEUR" IS NOT            ENABLED            
+NULL                                                        
+                                                            
+CK_CATGORIE_UTILISAT     UTILISATEUR                        
+EUR                                                         
+categorieutilisateur in ('EMPL           ENABLED            
+OYE' , 'ADHERENT')                                          
+                                                            
+CK_SEXE                  UTILISATEUR                        
+sexe in ('H' , 'F')                      ENABLED            
+                                                            
+SYS_C0011581             UTILISATEUR                        
+"IDUTILISATEUR" IS NOT NULL              ENABLED            
+                                                            
+SYS_C0011582             UTILISATEUR                        
+"NOM" IS NOT NULL                        ENABLED            
+                                                            
+SYS_C0011583             UTILISATEUR                        
+"PRENOM" IS NOT NULL                     ENABLED            
+                                                            
+SYS_C0011584             UTILISATEUR                        
+"PWD" IS NOT NULL                        ENABLED            
+                                                            
+SYS_C0011585             UTILISATEUR                        
+"PSEUDONYME" IS NOT NULL                 ENABLED            
+                                                            
+SYS_C0011586             UTILISATEUR                        
+"DATENAISSANCE" IS NOT NULL              ENABLED            
+                                                            
+-------------------- ***                                    
+                                                            
+                                                            
+                  50 cou                                    
+                                                            
+                                                            
+PK_ADHERENT46        P   ADHERENT                           
+                                         ENABLED            
+                                                            
+PK_AUTEUR52              AUTEUR                             
+                                         ENABLED            
+                                                            
+PK_ECRIRE50              AUTEUR_LIVRE                       
+                                         ENABLED            
+                                                            
+PK_EDITEUR32             EDITEUR                            
+                                         ENABLED            
+                                                            
+PK_EMPLOYE33             EMPLOYE                            
+                                         ENABLED            
+                                                            
+PK_EMPRUNTARCHIVE51      EMPRUNTARCHIVE                     
+                                         ENABLED            
+                                                            
+PK_EMPRUNTENCOURS54      EMPRUNTENCOURS                     
+                                         ENABLED            
+                                                            
+PK_EXEMPLAIRE53          EXEMPLAIRE                         
+                                         ENABLED            
+                                                            
+PK_LIVRE40               LIVRE                              
+                                         ENABLED            
+                                                            
+PK_THEME42               THEME                              
+                                         ENABLED            
+                                                            
+PK_UTILISATEUR44         UTILISATEUR                        
+                                         ENABLED            
+
+CONSTRAINT_NAME      TYP TABLE_NAME                         
+-------------------- --- ---------------                    
+SEARCH_CONDITION               DELETE_RU STATUS             
+------------------------------ --------- --------           
+                                                            
+-------------------- ***                                    
+                                                            
+                                                            
+                  11 cou                                    
+                                                            
+                                                            
+FK_ADHERENT30        R   ADHERENT                           
+                               NO ACTION ENABLED            
+                                                            
+FK_ECRIRE43              AUTEUR_LIVRE                       
+                               NO ACTION ENABLED            
+                                                            
+FK_AUTEUR_LIVRE46        AUTEUR_LIVRE                       
+                               NO ACTION ENABLED            
+                                                            
+FK_EMPLOYE33             EMPLOYE                            
+                               NO ACTION ENABLED            
+                                                            
+FK_EMPRUNTARCHIVE48      EMPRUNTARCHIVE                     
+                               NO ACTION ENABLED            
+                                                            
+FK_EMPRUNTARCHIVE44      EMPRUNTARCHIVE                     
+                               NO ACTION ENABLED            
+                                                            
+FK_EMPRUNTENCOURS29      EMPRUNTENCOURS                     
+                               NO ACTION ENABLED            
+                                                            
+FK_EMPRUNTENCOURS47      EMPRUNTENCOURS                     
+                               NO ACTION ENABLED            
+                                                            
+FK_EXEMPLAIRE24          EXEMPLAIRE                         
+                               NO ACTION ENABLED            
+                                                            
+FK_LIVRE19               LIVRE                              
+                               NO ACTION ENABLED            
+                                                            
+FK_LIVRE25               LIVRE                              
+                               NO ACTION ENABLED            
+                                                            
+FK_THEME45               THEME                              
+                               NO ACTION ENABLED            
+                                                            
+-------------------- ***                                    
+                                                            
+                                                            
+                  12 cou                                    
+                                                            
+                                                            
+TC_EMPLOYE147        U   EMPLOYE                            
+                                         ENABLED            
+                                                            
+TC_PSEUDO                UTILISATEUR                        
+                                         ENABLED            
+                                                            
+-------------------- ***                                    
+                                                            
+                                                            
+                   2 cou                                    
+                                                            
+                                                            
+
+75 lignes sélectionnées.
+
+SQL> 
+SQL> 
+SQL> clear columns
+SQL> clear breaks
+SQL> clear computes
+SQL> @install_data_biblio.sql
+SQL> delete from auteur_livre;
+
+0 lignes supprimées.
+
+SQL> delete from EmpruntArchive;
+
+0 lignes supprimées.
+
+SQL> delete from EmpruntEncours;
+
+0 lignes supprimées.
+
+SQL> delete from Adherent;
+
+0 lignes supprimées.
+
+SQL> delete from Employe;
+
+0 lignes supprimées.
+
+SQL> delete from Utilisateur;
+
+0 lignes supprimées.
+
+SQL> delete from Exemplaire;
+
+0 lignes supprimées.
+
+SQL> delete from Livre;
+
+0 lignes supprimées.
+
+SQL> delete from Editeur;
+
+0 lignes supprimées.
+
+SQL> delete from Theme;
+
+0 lignes supprimées.
+
+SQL> delete from Auteur;
+
+0 lignes supprimées.
+
+SQL> 
+SQL> insert into adherentgeneral values (3,15);
+
+1 ligne créée.
+
+SQL> insert into theme values ('RO','roman',null);
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into auteur values (seq_auteur.nextval,'KINDRED DICK','Philip');
+
+1 ligne créée.
+
+SQL> insert into editeur values (seq_editeur.nextval,'Omnibus','Paris');
+
+1 ligne créée.
+
+SQL> insert into theme values ('SF','Science-fiction','RO');
+
+1 ligne créée.
+
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'COGAN','Nicolas','101','cognico',to_date('21-03-1987' ,'DD-MM-YYYY' ),'H','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 25 45 74 69');
+
+1 ligne créée.
+
+SQL> insert into livre values (1520068789,'Siva',seq_editeur.currval,'SF',1973,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (1520068789,seq_auteur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('21-03-2001' ,'DD-MM-YYYY' ),'PRETE',1520068789);
+
+1 ligne créée.
+
+SQL> insert into empruntencours values (seq_exemplaire.currval,seq_utilisateur.currval,to_date('20-10-2016' ,'DD-MM-YYYY' ));
+
+1 ligne créée.
+
+SQL> insert into empruntarchive values (seq_archive.nextval,to_date('10-05-2015' ,'DD-MM-YYYY' ),to_date('18-05-2015' ,'DD-MM-YYYY' ),seq_exemplaire.currval,seq_utilisateur.currval);
+
+1 ligne créée.
+
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'DURIEUX','Elocia','100','durelo',to_date('12-05-1990' ,'DD-MM-YYYY' ),'F','EMPLOYE');
+
+1 ligne créée.
+
+SQL> insert into employe values (seq_utilisateur.currval,'22','BIBLIOTHECAIRE');
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'ROUSSEL','Sylvain','122','rousyl',to_date('21-03-1980' ,'DD-MM-YYYY' ),'H','EMPLOYE');
+
+1 ligne créée.
+
+SQL> insert into employe values (seq_utilisateur.currval,'19','GESTIONNAIRE');
+
+1 ligne créée.
+
+SQL> insert into livre values (2320063289,'Ubik',seq_editeur.currval,'SF',1969,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (2320063289,seq_editeur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('19-11-1999' ,'DD-MM-YYYY' ),'DISPONIBLE',2320063289);
+
+1 ligne créée.
+
+SQL> insert into empruntarchive values (seq_archive.nextval,to_date('10-03-2015' ,'DD-MM-YYYY' ),to_date('02-03-2015' ,'DD-MM-YYYY' ),seq_exemplaire.currval,seq_utilisateur.currval);
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'ROVIRAT','Elodie','107','rovelo',to_date('21-03-1991' ,'DD-MM-YYYY' ),'F','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 63 56 21 85');
+
+1 ligne créée.
+
+SQL> insert into livre values (3000066589,'Radio libre Albemuth',seq_editeur.currval,'SF',1972,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (3000066589,seq_editeur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('25-11-2003' ,'DD-MM-YYYY' ),'PRETE',3000066589);
+
+1 ligne créée.
+
+SQL> insert into empruntencours values (seq_exemplaire.currval,seq_utilisateur.currval,to_date('22-10-2017' ,'DD-MM-YYYY' ));
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into auteur values (seq_auteur.nextval,'KING','Stephen');
+
+1 ligne créée.
+
+SQL> insert into editeur values (seq_editeur.nextval,'10/18','Paris');
+
+1 ligne créée.
+
+SQL> insert into theme values ('HO','Horreur','RO');
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'BUSSON','Guillaume','102','busgui',to_date('21-02-1988' ,'DD-MM-YYYY' ),'H','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 32 46 89 12');
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'GALLAND','Aurelien','99','galaur',to_date('21-09-1984' ,'DD-MM-YYYY' ),'H','EMPLOYE');
+
+1 ligne créée.
+
+SQL> insert into employe values (seq_utilisateur.currval,'23','RESPONSABLE');
+
+1 ligne créée.
+
+SQL> insert into livre values (1630014789,'Cujo',seq_editeur.currval,'HO',1979,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (1630014789,seq_auteur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('15-04-2000' ,'DD-MM-YYYY' ),'DISPONIBLE',1630014789);
+
+1 ligne créée.
+
+SQL> insert into empruntarchive values (seq_archive.nextval,to_date('03-08-2015' ,'DD-MM-YYYY' ),to_date('23-07-2015' ,'DD-MM-YYYY' ),seq_exemplaire.currval,seq_utilisateur.currval);
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into livre values (3236506659,'Le pistolero',seq_editeur.currval,'HO',1968,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (3236506659,seq_editeur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('02-06-2000' ,'DD-MM-YYYY' ),'DISPONIBLE',3236506659);
+
+1 ligne créée.
+
+SQL> insert into empruntarchive values (seq_archive.nextval,to_date('03-11-2015' ,'DD-MM-YYYY' ),to_date('25-10-2015' ,'DD-MM-YYYY' ),seq_exemplaire.currval,1);
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'COCOT','Vincent','108','cocvinc',to_date('03-11-2001' ,'DD-MM-YYYY' ),'H','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 69 45 78 22');
+
+1 ligne créée.
+
+SQL> insert into livre values (3200066559,'Le fleau',seq_editeur.currval,'HO',1975,0);
+
+1 ligne créée.
+
+SQL> insert into auteur_livre values (3200066559,seq_editeur.currval,null);
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('19-03-2000' ,'DD-MM-YYYY' ),'PRETE',3200066559);
+
+1 ligne créée.
+
+SQL> insert into empruntencours values (seq_exemplaire.currval,seq_utilisateur.currval,to_date('25-10-2017' ,'DD-MM-YYYY' ));
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into auteur values (seq_auteur.nextval,'BUKOWSKI','Charles');
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'Zuccarelli','Ange','101','angel46',to_date('07-08-1987' ,'DD-MM-YYYY' ),'H','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 00000');
+
+1 ligne créée.
+
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('21-03-2001' ,'DD-MM-YYYY' ),'DISPONIBLE',1520068789);
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into utilisateur values (seq_utilisateur.nextval,'Retard','enretard','101','retend',to_date('07-08-1987' ,'DD-MM-YYYY' ),'H','ADHERENT');
+
+1 ligne créée.
+
+SQL> insert into adherent values (seq_utilisateur.currval,'06 00000');
+
+1 ligne créée.
+
+SQL> 
+SQL> insert into exemplaire values (seq_exemplaire.nextval,to_date('21-03-2001' ,'DD-MM-YYYY' ),'PRETE',3200066559);
+
+1 ligne créée.
+
+SQL> insert into empruntencours values (seq_exemplaire.currval,seq_utilisateur.currval,to_date('22-10-2017' ,'DD-MM-YYYY' ));
+
+1 ligne créée.
+
+SQL> 
+SQL> commit;
+
+Validation effectuée.
+
+SQL> @install_post_biblio_pour_londres.sql
+SQL> /***************************************************************
+SQL> Attribution des privilèges sur les objets.Création des synonymes
+SQL> MAJ: XH
+SQL> ***************************************************************/
+SQL> --Granter le privilège système "create public synonym" à biblio
+SQL> --Le propriétaire du schéma (biblio) donne des droits aux utilisateurs de la BD
+SQL> --Créez un user bibliothecaire
+SQL> 
+SQL> 
+SQL> --Les tables
+SQL> grant select on Utilisateur to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant select on Employe to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant select on Adherent to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant select, update on Exemplaire to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant select, insert, delete on EmpruntEncours to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant insert on EmpruntArchive  to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> grant select on AdherentGeneral to bibliothecaire;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> 
+SQL> --Les séquences
+SQL> grant select on seq_archive to biblio;
+
+Autorisation de privilèges (GRANT) acceptée.
+
+SQL> 
+SQL> 
+SQL> --Le propriétaire creée des biblio SYNONYM sur les tables
+SQL> CREATE OR REPLACE public SYNONYM Utilisateur FOR biblio.Utilisateur;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM Employe FOR biblio.Employe;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM Adherent FOR biblio.Adherent;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM Exemplaire FOR biblio.Exemplaire;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM EmpruntEncours FOR biblio.EmpruntEncours;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM EmpruntArchive FOR biblio.EmpruntArchive;
+
+Synonyme créé.
+
+SQL> CREATE OR REPLACE public SYNONYM AdherentGeneral FOR biblio.AdherentGeneral;
+
+Synonyme créé.
+
+SQL> 
+SQL> --Le propriétaire creée des public SYNONYM sur les sequences
+SQL> CREATE OR REPLACE public SYNONYM seq_archive FOR biblio.seq_archive;
+
+Synonyme créé.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> PROMPT	FIN NORMALE DU SCRIPT
+FIN NORMALE DU SCRIPT
+SQL> 
+SQL> -- Comportement par défaut
+SQL> spool off
